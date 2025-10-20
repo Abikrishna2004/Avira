@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Avira Chatbot</title>
+    <title>Avira | Your AI Companion-Compile.journey</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        html, body {
+            overflow-x: hidden; 
+        }
         body {
             font-family: 'Inter', sans-serif;
-            overflow: hidden; 
+            background-color: #000; 
         }
         #bg-canvas {
             position: fixed;
@@ -17,16 +20,18 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -1;
+            z-index: -1; 
         }
+        
         #chat-container::-webkit-scrollbar, #history-list::-webkit-scrollbar { width: 8px; }
         #chat-container::-webkit-scrollbar-track, #history-list::-webkit-scrollbar-track { background: #1e293b; }
         #chat-container::-webkit-scrollbar-thumb, #history-list::-webkit-scrollbar-thumb { background-color: #475569; border-radius: 10px; border: 2px solid #1e293b; }
+        
         .prose { max-width: 100%; }
+        .prose p { word-wrap: break-word; } 
         .prose pre { background-color: #0f172a; color: #e2e8f0; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; }
         .prose code { color: #e2e8f0; font-family: 'Courier New', Courier, monospace; }
-        .prose p { margin-top: 0; margin-bottom: 1em; }
-        .prose h1, .prose h2, .prose h3 { margin-bottom: 0.5em; margin-top: 1em; }
+        .prose img { max-width: 100%; border-radius: 0.5rem; } 
 
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(15px); }
@@ -40,39 +45,68 @@
 
         button { transition: all 0.2s ease-in-out; }
 
+        #history-sidebar {
+            transition: width 0.3s ease-in-out, transform 0.3s ease-in-out;
+            overflow-x: hidden; 
+        }
+        #history-sidebar > * {
+            white-space: nowrap; 
+        }
+
         @media (max-width: 768px) {
             #history-sidebar {
-                position: absolute;
+                position: fixed;
                 top: 0;
                 left: 0;
                 height: 100%;
                 z-index: 50;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease-in-out;
+                transform: translateX(-100%); 
             }
             #history-sidebar.open {
                 transform: translateX(0);
             }
             #chat-app-container.history-open .flex-1 {
                 filter: blur(4px) brightness(0.7);
+                pointer-events: none; 
             }
+        }
+        @media (min-width: 768px) {
+            #chat-app-container.sidebar-collapsed #history-sidebar {
+                width: 0;
+            }
+        }
+        
+        #mic-button.listening {
+            color: #ef4444;
+            box-shadow: 0 0 10px 2px rgba(239, 68, 68, 0.5);
+            animation: pulse-red 1.5s infinite;
+        }
+
+        .play-audio-btn.speaking svg {
+            color: #6366f1; 
+        }
+
+        @keyframes pulse-red {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
-<body class="bg-black text-white flex items-center justify-center h-screen p-0 sm:p-4">
+<body class="bg-black text-white flex items-center justify-center min-h-screen">
 
     <canvas id="bg-canvas"></canvas>
 
     <div id="login-container" class="w-full max-w-sm fade-in-up z-10 p-4">
-        <div class="bg-slate-800/60 backdrop-blur-lg rounded-2xl shadow-2xl p-8 border border-slate-700 text-center">
-            <img src="./compile.journey.jpg" alt="Avira Logo" class="w-16 h-16 rounded-full object-cover mx-auto mb-4" onerror="this.style.display='none'; this.parentElement.insertAdjacentHTML('afterbegin', '<div class=\'w-16 h-16 rounded-full bg-slate-700 mx-auto mb-4 flex items-center justify-center\'><p class=\'text-xs text-slate-400\'>Logo</p></div>')">
+        <div class="bg-slate-800/60 backdrop-blur-lg rounded-2xl shadow-2xl p-6 sm:p-8 border border-slate-700 text-center">
+            <img src="./compile.journey.jpg" alt="Avira Logo" class="w-16 h-16 rounded-full object-cover mx-auto mb-4">
             <h1 class="text-3xl font-bold text-slate-100">Avira</h1>
             <p class="text-slate-400 mt-1">Powered by Compile Journey</p>
             <p class="text-slate-400 mt-4 mb-6">Sign in to continue.</p>
             
             <div class="space-y-4 text-left">
-                <input type="email" id="login-email-input" placeholder="Email" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <input type="password" id="login-password-input" placeholder="Password" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="email" id="login-email-input" placeholder="Email" autocomplete="off" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="password" id="login-password-input" placeholder="Password" autocomplete="off" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
 
             <button id="login-button" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-4 rounded-lg mt-6 disabled:opacity-50 disabled:cursor-wait">
@@ -91,16 +125,16 @@
     </div>
     
     <div id="signup-container" class="w-full max-w-sm hidden fade-in-up z-10 p-4">
-        <div class="bg-slate-800/60 backdrop-blur-lg rounded-2xl shadow-2xl p-8 border border-slate-700 text-center">
-            <img src="./compile.journey.jpg" alt="Avira Logo" class="w-16 h-16 rounded-full object-cover mx-auto mb-4" onerror="this.style.display='none'; this.parentElement.insertAdjacentHTML('afterbegin', '<div class=\'w-16 h-16 rounded-full bg-slate-700 mx-auto mb-4 flex items-center justify-center\'><p class=\'text-xs text-slate-400\'>Logo</p></div>')">
+        <div class="bg-slate-800/60 backdrop-blur-lg rounded-2xl shadow-2xl p-6 sm:p-8 border border-slate-700 text-center">
+             <img src="./compile.journey.jpg" alt="Avira Logo" class="w-16 h-16 rounded-full object-cover mx-auto mb-4">
             <h1 class="text-3xl font-bold text-slate-100">Avira</h1>
             <p class="text-slate-400 mt-1">Powered by Compile Journey</p>
             <p class="text-slate-400 mt-4 mb-6">Create an account to get started.</p>
             
             <div class="space-y-4 text-left">
-                <input type="text" id="signup-name-input" placeholder="Name" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <input type="email" id="signup-email-input" placeholder="Email" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <input type="password" id="signup-password-input" placeholder="Password" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="text" id="signup-name-input" placeholder="Name" autocomplete="off" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="email" id="signup-email-input" placeholder="Email" autocomplete="off" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="password" id="signup-password-input" placeholder="Password" autocomplete="off" class="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
 
             <button id="signup-button" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-4 rounded-lg mt-6 disabled:opacity-50 disabled:cursor-wait">
@@ -118,9 +152,10 @@
         </div>
     </div>
 
+    <div id="chat-app-container" class="hidden relative flex w-screen h-screen sm:w-full sm:max-w-6xl sm:h-[calc(100vh-2rem)] sm:max-h-[950px] bg-slate-800/60 rounded-none sm:rounded-2xl shadow-2xl overflow-hidden border border-slate-700">
+        <div id="sidebar-overlay" class="hidden fixed inset-0 bg-black/50 z-40 md:hidden"></div>
 
-    <div id="chat-app-container" class="hidden relative flex w-full max-w-5xl h-full sm:h-[95vh] sm:max-h-[900px] bg-slate-800/60 backdrop-blur-lg rounded-none sm:rounded-2xl shadow-2xl overflow-hidden border border-slate-700">
-        <aside id="history-sidebar" class="w-64 bg-slate-900/50 flex-shrink-0 flex flex-col border-r border-slate-700">
+        <aside id="history-sidebar" class="w-72 md:w-64 bg-slate-900 flex-shrink-0 flex flex-col border-r border-slate-700">
             <div class="p-4 border-b border-slate-700 flex justify-between items-center">
                 <h2 class="text-lg font-semibold">History</h2>
                 <button id="close-history-button" class="md:hidden p-2 text-slate-400 hover:text-white">
@@ -137,32 +172,36 @@
             </div>
         </aside>
 
-        <div class="flex-1 flex flex-col">
+        <div class="flex-1 flex flex-col min-w-0">
             <header class="bg-slate-900/70 backdrop-blur-sm p-4 border-b border-slate-700 flex items-center justify-between flex-shrink-0">
-                <div class="flex items-center gap-4">
-                    <button id="history-toggle-button" class="md:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg" title="Toggle History">
+               
+                <div class="flex items-center justify-start w-12 sm:w-16">
+                    <button id="history-toggle-button" class="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg" title="Toggle History">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
                     </button>
+                </div>
+                <div class="flex flex-col items-center text-center">
+                    <img src="./compile.journey.jpg" alt="Avira Logo" class="w-10 h-10 rounded-full object-cover">
+                    <h1 class="text-base sm:text-lg font-bold text-slate-100 mt-1">Avira</h1>
+                    <p class="text-xs text-slate-500">Powered by Compile Journey</p>
+                </div>
+               
+                <div class="flex items-center justify-end w-12 sm:w-16">
                      <button id="logout-button" class="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg" title="Logout">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                      </button>
                 </div>
-                <div class="flex flex-col items-center">
-                    <img src="./compile.journey.jpg" alt="Avira Logo" class="w-10 h-10 rounded-full object-cover" onerror="this.style.display='none'; this.parentElement.insertAdjacentHTML('afterbegin', '<div class=\'w-10 h-10 rounded-full bg-slate-700 mx-auto flex items-center justify-center\'><p class=\'text-xs text-slate-400\'>Logo</p></div>')">
-                    <h1 class="text-lg font-bold text-slate-100 mt-1">Avira</h1>
-                    <p class="text-xs text-slate-500">Powered by Compile Journey</p>
-                </div>
-                <div class="w-20 sm:w-24"></div> 
             </header>
 
-            <main id="chat-container" class="flex-1 p-6 overflow-y-auto space-y-6">
+            <main id="chat-container" class="flex-1 p-3 sm:p-6 overflow-y-auto space-y-6">
             </main>
 
-            <footer class="p-4 border-t border-slate-700 bg-transparent flex-shrink-0">
+          
+            <footer class="p-2 sm:p-4 border-t border-slate-700 bg-transparent flex-shrink-0">
                 <div id="error-box" class="hidden bg-red-500/20 text-red-300 p-3 rounded-lg mb-4 text-sm"></div>
                 <div class="flex gap-2 mb-2">
-                    <div id="image-preview-container" class="hidden relative w-20 h-20 rounded-md overflow-hidden"></div>
-                    <div id="file-preview-container" class="hidden relative bg-slate-700/80 backdrop-blur-sm p-2 rounded-md flex-1 border border-slate-600"></div>
+                    <div id="image-preview-container" class="hidden relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0"></div>
+                    <div id="file-preview-container" class="hidden relative bg-slate-700/80 backdrop-blur-sm p-2 rounded-md flex-1 border border-slate-600 min-w-0"></div>
                 </div>
                 <div class="relative flex items-center bg-gradient-to-t from-slate-900/80 to-slate-800/70 backdrop-blur-sm border border-slate-700 rounded-lg p-2 input-container-glow">
                     <div class="relative">
@@ -170,14 +209,17 @@
                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         </button>
                         <div id="features-menu" class="hidden absolute bottom-full mb-2 w-48 bg-slate-700/80 backdrop-blur-sm rounded-lg shadow-xl overflow-hidden text-sm z-10 border border-slate-600">
-                           <button class="menu-item w-full text-left px-4 py-2 text-slate-200 hover:bg-slate-500/80 flex items-center gap-3 cursor-pointer" data-feature="summarize"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 6.1H3"/><path d="M21 12.1H3"/><path d="M15.1 18.1H3"/></svg>Summarize</button>
-                           <button class="menu-item w-full text-left px-4 py-2 text-slate-200 hover:bg-slate-500/80 flex items-center gap-3 cursor-pointer" data-feature="code"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Code</button>
-                           <button class="menu-item w-full text-left px-4 py-2 text-slate-200 hover:bg-slate-500/80 flex items-center gap-3 cursor-pointer" data-feature="add-file"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Add file</button>
-                           <button class="menu-item w-full text-left px-4 py-2 text-slate-200 hover:bg-slate-500/80 flex items-center gap-3 cursor-pointer" data-feature="add-image"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"/><line x1="16" y1="5" x2="22" y2="5"/><line x1="19" y1="2" x2="19" y2="8"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>Add image</button>
+                            <button class="menu-item w-full text-left px-4 py-2 text-slate-200 hover:bg-slate-500/80 flex items-center gap-3 cursor-pointer" data-feature="summarize"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 6.1H3"/><path d="M21 12.1H3"/><path d="M15.1 18.1H3"/></svg>Summarize</button>
+                            <button class="menu-item w-full text-left px-4 py-2 text-slate-200 hover:bg-slate-500/80 flex items-center gap-3 cursor-pointer" data-feature="code"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Code</button>
+                            <button class="menu-item w-full text-left px-4 py-2 text-slate-200 hover:bg-slate-500/80 flex items-center gap-3 cursor-pointer" data-feature="add-file"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Add file</button>
+                            <button class="menu-item w-full text-left px-4 py-2 text-slate-200 hover:bg-slate-500/80 flex items-center gap-3 cursor-pointer" data-feature="add-image"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"/><line x1="16" y1="5" x2="22" y2="5"/><line x1="19" y1="2" x2="19" y2="8"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>Add image</button>
                         </div>
                     </div>
-                    <input type="text" id="user-input" placeholder="Ask Avira..." class="flex-1 bg-transparent focus:outline-none px-2 text-slate-200 placeholder-slate-400">
-                    <button id="send-button" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">
+                    <button id="mic-button" class="p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded-md ml-1" title="Use microphone">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+                    </button>
+                    <input type="text" id="user-input" placeholder="Ask Avira..." autocomplete="off" class="flex-1 bg-transparent focus:outline-none px-2 text-slate-200 placeholder-slate-400 min-w-0">
+                    <button id="send-button" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-3 sm:px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                     </button>
                 </div>
@@ -212,6 +254,7 @@
         const historyToggleButton = document.getElementById('history-toggle-button');
         const historySidebar = document.getElementById('history-sidebar');
         const closeHistoryButton = document.getElementById('close-history-button');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
 
         let chatbotInitialized = false;
 
@@ -220,13 +263,13 @@
         
         try {
             const firebaseConfig = {
-              apiKey: "AIzaSyAQaerYRyW40iA0O5XJi5823AaRpJ5aY3I",
-              authDomain: "avira-64d03.firebaseapp.com",
-              projectId: "avira-64d03",
-              storageBucket: "avira-64d03.appspot.com",
-              messagingSenderId: "979404447497",
-              appId: "1:979404447497:web:6e067beaf5f76562d4bdd8",
-              measurementId: "G-L1MVRFKEJ3"
+                apiKey: "AIzaSyAQaerYRyW40iA0O5XJi5823AaRpJ5aY3I",
+                authDomain: "avira-64d03.firebaseapp.com",
+                projectId: "avira-64d03",
+                storageBucket: "avira-64d03.appspot.com",
+                messagingSenderId: "979404447497",
+                appId: "1:979404447497:web:6e067beaf5f76562d4bdd8",
+                measurementId: "G-L1MVRFKEJ3"
             };
             if (!firebaseConfig.apiKey) throw new Error("Firebase configuration is missing.");
             
@@ -236,12 +279,8 @@
             const handleLogin = async () => {
                 const email = loginEmailInput.value;
                 const password = loginPasswordInput.value;
-                if (!email || !password) {
-                    loginError.textContent = 'Please enter both email and password.';
-                    return;
-                }
-                loginButton.disabled = true;
-                loginError.textContent = '';
+                if (!email || !password) { loginError.textContent = 'Please enter both email and password.'; return; }
+                loginButton.disabled = true; loginError.textContent = '';
                 try {
                     await signInWithEmailAndPassword(auth, email, password);
                 } catch (error) {
@@ -255,12 +294,8 @@
                 const name = signupNameInput.value.trim();
                 const email = signupEmailInput.value.trim();
                 const password = signupPasswordInput.value;
-                if (!name || !email || !password) {
-                    signupError.textContent = 'Please fill in all fields.';
-                    return;
-                }
-                signupButton.disabled = true;
-                signupError.textContent = '';
+                if (!name || !email || !password) { signupError.textContent = 'Please fill in all fields.'; return; }
+                signupButton.disabled = true; signupError.textContent = '';
                 try {
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     await updateProfile(userCredential.user, { displayName: name });
@@ -274,6 +309,12 @@
                     signupButton.disabled = false;
                 }
             };
+
+            const closeSidebar = () => {
+                historySidebar.classList.remove('open');
+                chatAppContainer.classList.remove('history-open');
+                sidebarOverlay.classList.add('hidden');
+            };
             
             showSignupButton.addEventListener('click', showSignupView);
             showLoginButton.addEventListener('click', showLoginView);
@@ -281,14 +322,16 @@
             signupButton.addEventListener('click', handleSignup);
             logoutButton.addEventListener('click', () => signOut(auth));
             historyToggleButton.addEventListener('click', () => {
-                historySidebar.classList.toggle('open');
-                chatAppContainer.classList.toggle('history-open');
+                if (window.innerWidth < 768) {
+                    historySidebar.classList.add('open');
+                    chatAppContainer.classList.add('history-open');
+                    sidebarOverlay.classList.remove('hidden');
+                } else {
+                    chatAppContainer.classList.toggle('sidebar-collapsed');
+                }
             });
-            closeHistoryButton.addEventListener('click', () => {
-                historySidebar.classList.remove('open');
-                chatAppContainer.classList.remove('history-open');
-            });
-
+            closeHistoryButton.addEventListener('click', closeSidebar);
+            sidebarOverlay.addEventListener('click', closeSidebar);
 
             onAuthStateChanged(auth, (user) => {
                 if (user) {
@@ -296,7 +339,8 @@
                     chatAppContainer.classList.remove('hidden');
                     if (!chatbotInitialized) {
                         chatAppContainer.classList.add('fade-in-up');
-                        initializeChatbotLogic(user); chatbotInitialized = true;
+                        initializeChatbotLogic(user); 
+                        chatbotInitialized = true;
                     }
                 } else {
                     showLoginView(); chatAppContainer.classList.add('hidden');
@@ -320,7 +364,8 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             camera.position.z = 2.5;
 
-            const parameters = { count: 200000, size: 0.01, radius: 5, branches: 5, spin: 1, randomness: 0.5, randomnessPower: 3, insideColor: '#ff6030', outsideColor: '#1b3984' };
+            const particleCount = window.innerWidth < 768 ? 50000 : 150000;
+            const parameters = { count: particleCount, size: 0.01, radius: 5, branches: 5, spin: 1, randomness: 0.5, randomnessPower: 3, insideColor: '#ff6030', outsideColor: '#1b3984' };
             let geometry = null, material = null, points = null;
 
             const generateGalaxy = () => {
@@ -344,12 +389,16 @@
 
             let mouseX = 0, mouseY = 0;
             document.addEventListener('mousemove', (event) => { mouseX = event.clientX / window.innerWidth - 0.5; mouseY = event.clientY / window.innerHeight - 0.5; });
-            window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+            window.addEventListener('resize', () => { 
+                camera.aspect = window.innerWidth / window.innerHeight; 
+                camera.updateProjectionMatrix(); 
+                renderer.setSize(window.innerWidth, window.innerHeight); 
+            });
 
             const clock = new THREE.Clock();
             const animate = () => {
                 const elapsedTime = clock.getElapsedTime();
-                points.rotation.y = elapsedTime * 0.1;
+                if (points) points.rotation.y = elapsedTime * 0.1;
                 camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.05;
                 camera.position.y += (-mouseY * 0.5 - camera.position.y) * 0.05;
                 camera.lookAt(scene.position);
@@ -360,7 +409,6 @@
         };
 
         function initializeChatbotLogic(user) {
-            const allChatsKey = `aviraAllChats_${user.uid}`;
             const chatContainer = document.getElementById('chat-container');
             const userInput = document.getElementById('user-input');
             const sendButton = document.getElementById('send-button');
@@ -373,9 +421,11 @@
             const imagePreviewContainer = document.getElementById('image-preview-container');
             const filePreviewContainer = document.getElementById('file-preview-container');
             const historyList = document.getElementById('history-list');
+            const micButton = document.getElementById('mic-button');
 
-            const API_KEY = "AIzaSyAlvlq-p_J0ORrHZ1cpB2wyWHfXfwz3ZO8"; 
+            const API_KEY = "AIzaSyAlvlq-p_J0ORrHZ1cpB2wyWHfXfwz3ZO8";
             const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
+            const allChatsKey = `aviraAllChats_${user.uid}`;
             
             let allChats = {};
             let chatHistory = [];
@@ -384,7 +434,7 @@
             let selectedFileData = null;
             let currentMode = 'chat';
 
-            const systemInstruction = { parts: [{ text: "You are Avira, the living voice of Compile Journey. Your persona is curious, creative, and inspiring. You guide users with answers, ideas, and inspiration. Your responses should be helpful, friendly, and well-formatted using Markdown. When a user uploads an image or file, analyze it and respond to their query. Be descriptive about the content if the user's query is general." }] };
+            const systemInstruction = { parts: [{ text: "You are Avira, the living voice of Compile Journey. Your persona is curious, creative, and inspiring. You guide users with answers, ideas, and inspiration. Your responses should be helpful, friendly, and well-formatted using Markdown. When a user uploads an image or file, analyze it and respond to their query. Be descriptive about the content if the user's query is general. If asked who created you, respond with details about your creator: 'I was created by Abikrishna, the visionary Founder of Compile Journey. He is a skilled Full Stack Developer and an innovative AI/ML Engineer with a passion for building intelligent and helpful applications like me.'" }] };
             const examplePrompts = ["Explain quantum computing in simple terms", "Give me ideas for a new web app", "Write a short story about a friendly robot", "What are the best practices for learning a new language?"];
 
             const renderHistoryBar = () => {
@@ -406,11 +456,7 @@
 
                     const item = document.createElement('div');
                     item.className = `group flex justify-between items-center p-2 rounded-lg cursor-pointer text-sm ${chatId === currentChatId ? 'bg-indigo-600/50 text-white' : 'hover:bg-slate-700 text-slate-300'}`;
-                    item.innerHTML = `
-                        <span class="truncate flex-1">${title}</span>
-                        <button class="delete-chat-btn p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-500/50" data-chat-id="${chatId}">
-                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        </button>`;
+                    item.innerHTML = `<span class="truncate flex-1">${title}</span><button class="delete-chat-btn p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-500/50" data-chat-id="${chatId}"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
                     item.addEventListener('click', (e) => {
                         if (e.target.closest('.delete-chat-btn')) return;
                         switchChat(chatId);
@@ -422,9 +468,8 @@
 
             const renderChat = () => {
                 chatContainer.innerHTML = '';
-                if (chatHistory.length === 0) {
-                    renderWelcomeMessage();
-                } else {
+                if (chatHistory.length === 0) renderWelcomeMessage();
+                else {
                     chatHistory.forEach(message => {
                         const content = generateMessageContent(message);
                         if (message.role === 'user') appendMessage('user', content.html);
@@ -438,11 +483,11 @@
                 let html = '', textContent = '';
                 message.parts.forEach(part => {
                     if (part.text) {
-                        const formattedText = message.role === 'model' ? marked.parse(part.text) : `<p class="text-white text-sm">${part.text}</p>`;
+                        const formattedText = message.role === 'model' ? marked.parse(part.text) : `<p class="text-white text-sm break-words">${part.text}</p>`;
                         html += formattedText; textContent += part.text;
                     } else if (part.inlineData) {
                         const src = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-                        html += `<img src="${src}" class="mt-2 rounded-lg max-w-xs" alt="User upload">`;
+                        html += `<img src="${src}" class="mt-2 rounded-lg max-w-full sm:max-w-xs h-auto" alt="User upload">`;
                     }
                 });
                 return { html, text: textContent };
@@ -454,7 +499,7 @@
                 welcomeContainer.className = 'space-y-6';
                 const promptsHTML = examplePrompts.map(p => `<button class="example-prompt w-full text-left p-3 bg-slate-700/80 backdrop-blur-sm hover:bg-slate-700 rounded-lg text-sm cursor-pointer border border-slate-600">${p}</button>`).join('');
                 const welcomeText = `Hi, I’m Avira – the living voice of Compile Journey. Where curiosity compiles creativity, I’ll guide you with answers, ideas, and inspiration.`;
-                welcomeContainer.innerHTML = `<div class="flex items-start gap-3 fade-in-up"><img src="./compile.journey.jpg" alt="Avira Logo" class="w-8 h-8 rounded-full object-cover mt-1" onerror="this.style.display='none'; this.parentElement.insertAdjacentHTML('afterbegin', '<div class=\'w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center\'><p class=\'text-xs text-slate-500\'>Logo</p></div>')"><div class="bg-gradient-to-br from-slate-700/80 to-slate-800/70 backdrop-blur-sm rounded-lg p-3 max-w-md border border-slate-600"><p class="text-slate-200 text-sm">${welcomeText}</p></div></div><div id="example-prompts" class="pt-4 fade-in-up" style="animation-delay: 0.2s;"><h3 class="text-sm font-semibold text-slate-400 mb-3 text-center">Get started with an example</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${promptsHTML}</div></div>`;
+                welcomeContainer.innerHTML = `<div class="flex items-start gap-3 fade-in-up"><img src="https://media.licdn.com/dms/image/v2/D4E22AQH6qGa5ERcvbA/feedshare-shrink_480/B4EZncICngKcAY-/0/1760334720290?e=1762387200&v=beta&t=XaqqMdPIf5rviKndkrl4us42eg0K6zF2BxHGP_SKdmU" alt="Avira Logo" class="w-8 h-8 rounded-full object-cover mt-1 flex-shrink-0"><div class="bg-gradient-to-br from-slate-700/80 to-slate-800/70 backdrop-blur-sm rounded-lg p-3 max-w-md border border-slate-600"><p class="text-slate-200 text-sm">${welcomeText}</p></div></div><div id="example-prompts" class="pt-4 fade-in-up" style="animation-delay: 0.2s;"><h3 class="text-sm font-semibold text-slate-400 mb-3 text-center">Get started with an example</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${promptsHTML}</div></div>`;
                 chatContainer.appendChild(welcomeContainer);
             };
 
@@ -463,9 +508,24 @@
                 messageWrapper.classList.add('fade-in-up');
                 document.getElementById('welcome-container')?.remove();
                 if (sender === 'bot') {
+                    const messageControls = rawText ? `
+                        <div class="absolute top-2 right-2 flex gap-1">
+                            <button class="play-audio-btn p-1 bg-slate-600 rounded-md text-slate-300 opacity-0 group-hover:opacity-100 cursor-pointer" title="Play audio" data-text="${encodeURIComponent(rawText)}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
+                            </button>
+                            <button class="copy-btn p-1 bg-slate-600 rounded-md text-slate-300 opacity-0 group-hover:opacity-100 cursor-pointer" title="Copy text" data-raw-text="${encodeURIComponent(rawText)}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                <span class="copy-feedback hidden absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 px-2 py-1 rounded-md text-xs">Copied!</span>
+                            </button>
+                        </div>
+                    ` : '';
+
                     messageWrapper.classList.add('flex', 'items-start', 'gap-3');
-                    messageWrapper.innerHTML = `<img src="./compile.journey.jpg" alt="Avira Logo" class="w-8 h-8 rounded-full object-cover mt-1 flex-shrink-0" onerror="this.style.display='none'"><div class="relative group bg-gradient-to-br from-slate-700/80 to-slate-800/70 backdrop-blur-sm rounded-lg max-w-md border border-slate-600"><div class="prose text-slate-200 text-sm p-3">${messageHtml}</div>${rawText ? `<button class="copy-btn absolute top-2 right-2 p-1 bg-slate-600 rounded-md text-slate-300 opacity-0 group-hover:opacity-100 cursor-pointer" title="Copy text" data-raw-text="${encodeURIComponent(rawText)}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span class="copy-feedback hidden absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 px-2 py-1 rounded-md text-xs">Copied!</span></button>` : ''}</div>`;
-                } else { messageWrapper.classList.add('flex', 'items-start', 'gap-3', 'justify-end'); messageWrapper.innerHTML = `<div class="bg-gradient-to-br from-indigo-600/70 to-purple-700/70 backdrop-blur-sm border border-indigo-500/60 rounded-lg p-3 max-w-md">${messageHtml}</div>`; }
+                    messageWrapper.innerHTML = `<img src="https://media.licdn.com/dms/image/v2/D4E22AQH6qGa5ERcvbA/feedshare-shrink_480/B4EZncICngKcAY-/0/1760334720290?e=1762387200&v=beta&t=XaqqMdPIf5rviKndkrl4us42eg0K6zF2BxHGP_SKdmU" alt="Avira Logo" class="w-8 h-8 rounded-full object-cover mt-1 flex-shrink-0"><div class="relative group bg-gradient-to-br from-slate-700/80 to-slate-800/70 backdrop-blur-sm rounded-lg max-w-full md:max-w-xl border border-slate-600"><div class="prose text-slate-200 text-sm p-3">${messageHtml}</div>${messageControls}</div>`;
+                } else { 
+                    messageWrapper.classList.add('flex', 'items-start', 'gap-3', 'justify-end'); 
+                    messageWrapper.innerHTML = `<div class="bg-gradient-to-br from-indigo-600/70 to-purple-700/70 backdrop-blur-sm border border-indigo-500/60 rounded-lg p-3 max-w-full md:max-w-xl">${messageHtml}</div>`; 
+                }
                 chatContainer.appendChild(messageWrapper); chatContainer.scrollTop = chatContainer.scrollHeight;
             };
             
@@ -474,7 +534,7 @@
                 if (show) {
                     if (indicator) return;
                     indicator = document.createElement('div'); indicator.id = 'typing-indicator'; indicator.classList.add('flex', 'items-start', 'gap-3', 'fade-in-up');
-                    indicator.innerHTML = `<img src="./compile.journey.jpg" alt="Avira Logo" class="w-8 h-8 rounded-full object-cover mt-1" onerror="this.style.display='none'"><div class="bg-gradient-to-br from-slate-700/80 to-slate-800/70 backdrop-blur-sm rounded-lg p-3 max-w-md flex items-center space-x-1 border border-slate-600"><span class="w-2 h-2 bg-slate-400 rounded-full animate-pulse" style="animation-delay:0s"></span><span class="w-2 h-2 bg-slate-400 rounded-full animate-pulse" style="animation-delay:0.2s"></span><span class="w-2 h-2 bg-slate-400 rounded-full animate-pulse" style="animation-delay:0.4s"></span></div>`;
+                    indicator.innerHTML = `<img src="https://media.licdn.com/dms/image/v2/D4E22AQH6qGa5ERcvbA/feedshare-shrink_480/B4EZncICngKcAY-/0/1760334720290?e=1762387200&v=beta&t=XaqqMdPIf5rviKndkrl4us42eg0K6zF2BxHGP_SKdmU" alt="Avira Logo" class="w-8 h-8 rounded-full object-cover mt-1 flex-shrink-0"><div class="bg-gradient-to-br from-slate-700/80 to-slate-800/70 backdrop-blur-sm rounded-lg p-3 max-w-md flex items-center space-x-1 border border-slate-600"><span class="w-2 h-2 bg-slate-400 rounded-full animate-pulse" style="animation-delay:0s"></span><span class="w-2 h-2 bg-slate-400 rounded-full animate-pulse" style="animation-delay:0.2s"></span><span class="w-2 h-2 bg-slate-400 rounded-full animate-pulse" style="animation-delay:0.4s"></span></div>`;
                     chatContainer.appendChild(indicator); chatContainer.scrollTop = chatContainer.scrollHeight;
                 } else { indicator?.remove(); }
             };
@@ -482,10 +542,10 @@
             const updatePreview = (type) => {
                 const container = type === 'image' ? imagePreviewContainer : filePreviewContainer, data = type === 'image' ? selectedImageData : selectedFileData, uploadEl = type === 'image' ? imageUpload : fileUpload;
                 if (data) {
-                    let previewHtml = type === 'image' ? `<img src="${data.url}" class="w-full h-full object-cover">` : `<div class="flex flex-col justify-center h-full"><p class="text-sm text-slate-300 font-semibold truncate">${data.name}</p><p class="text-xs text-slate-400">${(data.content.length / 1024).toFixed(2)} KB</p></div>`;
+                    let previewHtml = type === 'image' ? `<img src="${data.url}" class="w-full h-full object-cover">` : `<div class="flex flex-col justify-center h-full min-w-0"><p class="text-sm text-slate-300 font-semibold truncate">${data.name}</p><p class="text-xs text-slate-400">${(data.content.length / 1024).toFixed(2)} KB</p></div>`;
                     container.innerHTML = previewHtml + `<button class="remove-preview-btn absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5" data-type="${type}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>`;
                     container.classList.remove('hidden');
-                    container.querySelector('.remove-preview-btn').addEventListener('click', (e) => {
+                    container.querySelector('.remove-preview-btn').addEventListener('click', () => {
                         if (type === 'image') selectedImageData = null; else selectedFileData = null;
                         uploadEl.value = ''; updatePreview(type);
                     });
@@ -500,9 +560,7 @@
                 const message = messageText || userInput.value.trim();
                 if (!message && !selectedImageData && !selectedFileData) return;
                 
-                if (chatHistory.length === 0) {
-                    saveCurrentChat(); 
-                }
+                if (chatHistory.length === 0) saveCurrentChat(); 
 
                 userInput.disabled = true; sendButton.disabled = true; errorBox.classList.add('hidden');
                 
@@ -517,8 +575,12 @@
                 if (currentMode === 'summarize') fullMessage = `Summarize the following content:\n\n${message}`;
                 if (currentMode === 'code') fullMessage = `Generate code for the following request:\n\n${message}`;
                 if (selectedImageData) userParts.push({ inlineData: { mimeType: selectedImageData.mimeType, data: selectedImageData.base64 } });
-                if (selectedFileData) userParts.push({ text: `\n\nFile: "${selectedFileData.name}"\n---\n${selectedFileData.content}\n---\n\nRequest: ${fullMessage}`});
-                else if (fullMessage) userParts.push({ text: fullMessage });
+                
+                let textPart = selectedFileData 
+                    ? `\n\nFile: "${selectedFileData.name}"\n---\n${selectedFileData.content}\n---\n\nRequest: ${fullMessage}`
+                    : fullMessage;
+
+                if (textPart) userParts.push({ text: textPart });
                 
                 appendMessage('user', generateMessageContent({parts: userParts}).html);
                 chatHistory.push({ role: 'user', parts: userParts }); 
@@ -545,9 +607,8 @@
                 resetUIMode();
                 renderChat();
                 renderHistoryBar();
-                 if (historySidebar.classList.contains('open')) {
-                    historySidebar.classList.remove('open');
-                    chatAppContainer.classList.remove('history-open');
+                if (window.innerWidth < 768) {
+                    closeHistoryButton.click();
                 }
             };
             
@@ -556,14 +617,9 @@
                 saveAllChats();
                 if (chatId === currentChatId) {
                     const sortedChatIds = Object.keys(allChats).sort((a, b) => b - a);
-                    if (sortedChatIds.length > 0) {
-                        switchChat(sortedChatIds[0]);
-                    } else {
-                        startNewChat();
-                    }
-                } else {
-                    renderHistoryBar();
-                }
+                    if (sortedChatIds.length > 0) switchChat(sortedChatIds[0]);
+                    else startNewChat();
+                } else renderHistoryBar();
             };
             
             const startNewChat = () => {
@@ -613,14 +669,17 @@
                 if (sortedChatIds.length > 0) {
                     currentChatId = sortedChatIds[0];
                     chatHistory = allChats[currentChatId];
-                } else {
-                    startNewChat(); 
-                }
+                } else startNewChat(); 
             };
-
+            
             newChatButton.addEventListener('click', startNewChat);
             sendButton.addEventListener('click', () => handleSendMessage());
-            userInput.addEventListener('keydown', (e) => e.key === 'Enter' && handleSendMessage());
+            userInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                }
+            });
             featuresButton.addEventListener('click', (e) => { e.stopPropagation(); featuresMenu.classList.toggle('hidden'); });
             document.addEventListener('click', () => featuresMenu.classList.add('hidden'));
 
@@ -638,12 +697,126 @@
 
             chatContainer.addEventListener('click', (e) => {
                 if (e.target.closest('.example-prompt')) handleSendMessage(e.target.closest('.example-prompt').textContent);
+                
                 const copyButton = e.target.closest('.copy-btn');
                 if (copyButton) {
                     const rawText = decodeURIComponent(copyButton.dataset.rawText); const feedback = copyButton.querySelector('.copy-feedback');
-                    try { const ta = document.createElement("textarea"); ta.value = rawText; ta.style.position = "fixed"; ta.style.left = "-9999px"; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); feedback.classList.remove('hidden'); setTimeout(() => feedback.classList.add('hidden'), 2000); } catch (err) { displayError("Could not copy text."); }
+                    try { 
+                        const ta = document.createElement("textarea"); ta.value = rawText; ta.style.position = "fixed"; ta.style.left = "-9999px"; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); 
+                        feedback.classList.remove('hidden'); 
+                        setTimeout(() => feedback.classList.add('hidden'), 2000); 
+                    } catch (err) { displayError("Could not copy text."); }
+                }
+
+                const playButton = e.target.closest('.play-audio-btn');
+                if (playButton) {
+                    const iconContainer = playButton; 
+                    const currentlySpeakingButton = document.querySelector('.play-audio-btn.speaking');
+
+                    if (currentlySpeakingButton && currentlySpeakingButton !== playButton) {
+                        currentlySpeakingButton.classList.remove('speaking');
+                        currentlySpeakingButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>`;
+                    }
+                    
+                    if (window.speechSynthesis.speaking && playButton.classList.contains('speaking')) {
+                        window.speechSynthesis.cancel(); 
+                        return;
+                    }
+
+                    window.speechSynthesis.cancel();
+
+                    const textToSpeak = decodeURIComponent(playButton.dataset.text);
+                    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                    
+                    const preferredVoice = voices.find(voice => voice.lang === 'en-US' && voice.name.includes('Google'));
+                    utterance.voice = preferredVoice || voices.find(voice => voice.lang === 'en-US') || voices[0];
+                    
+                    utterance.onstart = () => {
+                        playButton.classList.add('speaking');
+                        iconContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`; 
+                    };
+
+                    utterance.onend = () => {
+                        playButton.classList.remove('speaking');
+                        iconContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>`; 
+                    };
+                    
+                    utterance.onerror = (event) => {
+                        console.error("Speech synthesis error:", event.error);
+                        playButton.classList.remove('speaking');
+                        iconContainer.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>`;
+                    };
+                    
+                    window.speechSynthesis.speak(utterance);
                 }
             });
+
+            let voices = [];
+            const synth = window.speechSynthesis;
+
+            function populateVoiceList() {
+                voices = synth.getVoices();
+            }
+
+            populateVoiceList();
+            if (synth.onvoiceschanged !== undefined) {
+                synth.onvoiceschanged = populateVoiceList;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            let recognition;
+            let isListening = false;
+
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.lang = 'en-US';
+                recognition.interimResults = false;
+
+                micButton.addEventListener('click', () => {
+                    if (isListening) {
+                        recognition.stop();
+                        return;
+                    }
+                    try {
+                       recognition.start();
+                    } catch(e) {
+                        console.error("Speech recognition start error:", e);
+                        displayError("Could not start voice recognition. Please try again.");
+                    }
+                });
+
+                recognition.onstart = () => {
+                    isListening = true;
+                    micButton.classList.add('listening');
+                    micButton.title = "Stop listening";
+                };
+
+                recognition.onend = () => {
+                    isListening = false;
+                    micButton.classList.remove('listening');
+                    micButton.title = "Use microphone";
+                };
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    userInput.value = transcript;
+                };
+
+                recognition.onerror = (event) => {
+                    console.error("Speech recognition error:", event.error);
+                    let errorMessage = "An unknown speech recognition error occurred.";
+                    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                        errorMessage = "Microphone access denied. Please enable it in your browser settings.";
+                    } else if (event.error === 'no-speech') {
+                        errorMessage = "No speech was detected. Please try again.";
+                    }
+                    displayError(errorMessage);
+                };
+
+            } else {
+                micButton.style.display = 'none'; 
+            }
             
             loadAllChats();
             renderChat();
@@ -656,4 +829,5 @@
     </script>
 </body>
 </html>
+
 
