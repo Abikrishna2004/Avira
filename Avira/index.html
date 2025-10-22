@@ -263,13 +263,13 @@
         
         try {
             const firebaseConfig = {
-                apiKey: "AIzaSyAQaerYRyW40iA0O5XJi5823AaRpJ5aY3I",
-                authDomain: "avira-64d03.firebaseapp.com",
-                projectId: "avira-64d03",
-                storageBucket: "avira-64d03.appspot.com",
-                messagingSenderId: "979404447497",
-                appId: "1:979404447497:web:6e067beaf5f76562d4bdd8",
-                measurementId: "G-L1MVRFKEJ3"
+                apiKey: "",
+                authDomain: "",
+                projectId: "",
+                storageBucket: "",
+                messagingSenderId: "",
+                appId: "",
+                measurementId: ""
             };
             if (!firebaseConfig.apiKey) throw new Error("Firebase configuration is missing.");
             
@@ -423,7 +423,7 @@
             const historyList = document.getElementById('history-list');
             const micButton = document.getElementById('mic-button');
 
-            const API_KEY = "AIzaSyAlvlq-p_J0ORrHZ1cpB2wyWHfXfwz3ZO8";
+            const API_KEY = "";
             const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
             const allChatsKey = `aviraAllChats_${user.uid}`;
             
@@ -829,5 +829,6 @@
     </script>
 </body>
 </html>
+
 
 
